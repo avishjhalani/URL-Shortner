@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener - Shorten Your Links</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔗 URL Shortener</h1>
+            <p>Transform long URLs into short, shareable links</p>
+        </header>
+
+        <main>
+            <div class="card">
+                <h2>Shorten Your URL</h2>
+                <form id="urlForm">
+                    <div class="input-group">
+                        <input 
+                            type="url" 
+                            id="urlInput" 
+                            placeholder="Enter your long URL here (e.g., https://example.com)"
+                            required
+                        >
+                        <button type="submit" id="submitBtn">
+                            <span>Shorten</span>
+                        </button>
+                    </div>
+                </form>
+
+                <div id="result" class="result hidden">
+                    <div class="result-content">
+                        <label>Your Short URL:</label>
+                        <div class="short-url-container">
+                            <input 
+                                type="text" 
+                                id="shortUrl" 
+                                readonly 
+                                value=""
+                            >
+                            <button id="copyBtn" class="copy-btn">
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                        <div class="result-actions">
+                            <button id="testBtn" class="test-btn">Test Link</button>
+                            <button id="analyticsBtn" class="analytics-btn">View Analytics</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="error" class="error hidden"></div>
+            </div>
+
+            <div id="analyticsCard" class="card analytics-card hidden">
+                <h2>Analytics</h2>
+                <div id="analyticsContent">
+                    <div class="stat">
+                        <span class="stat-label">Total Clicks:</span>
+                        <span class="stat-value" id="totalClicks">0</span>
+                    </div>
+                    <div class="analytics-list">
+                        <h3>Visit History</h3>
+                        <div id="visitHistory" class="visit-history">
+                            <p class="no-data">No visits yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Made with ❤️ - URL Shortener Service</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
