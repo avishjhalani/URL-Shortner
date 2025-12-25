@@ -6,7 +6,13 @@ const { handleGetAnalytics } = require("./controllers/url");
 
 const app = express();
 const PORT = process.env.PORT || 8001;
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/URLSHORT";
+// Require MONGODB_URI for production (Vercel), allow localhost for local dev
+const MONGODB_URI = process.env.MONGODB_URI || (process.env.NODE_ENV === 'production' ? null : "mongodb://127.0.0.1:27017/URLSHORT");
+
+if (!MONGODB_URI) {
+  console.error("ERROR: MONGODB_URI environment variable is required for production!");
+  console.error("Please set MONGODB_URI in Vercel environment variables.");
+}
 
 // Serve static files from public directory
 app.use(express.static("public"));
