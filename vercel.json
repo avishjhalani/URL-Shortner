@@ -2,7 +2,7 @@
   "rewrites": [
     { "source": "/url", "destination": "/api/url" },
     { "source": "/url/(.*)", "destination": "/api/url/$1" },
-    { "source": "/analytics/(.*)", "destination": "/api/url/analytics/$1" },
-    { "source": "/:shortID", "destination": "/api/:shortID" }
+    { "source": "/analytics/(.*)", "destination": "/api/analytics/$1" },
+    { "source": "/([a-zA-Z0-9_-]{1,20})", "destination": "/api/$1" }
   ]
 }

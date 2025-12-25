@@ -1,31 +1,25 @@
+// This file is for local development only
+// Vercel uses individual API route files in /api folder
 const express = require("express");
 const urlRoute = require("../routes/url");
 const { connectToMongoDB } = require("../connect");
 const URL = require("../models/url");
 
 const app = express();
+const PORT = process.env.PORT || 8001;
+
+// Serve static files
+app.use(express.static("public"));
 
 // Middleware
 app.use(express.json({ strict: false }));
 
-let isConnected = false;
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/URLSHORT";
 
-async function ensureDB() {
-  if (!isConnected) {
-    await connectToMongoDB(process.env.MONGODB_URI);
-    isConnected = true;
-  }
-}
-
-app.use(async (req, res, next) => {
-  try {
-    await ensureDB();
-    next();
-  } catch (err) {
-    console.error("DB connection failed", err);
-    res.status(500).json({ error: "Database connection failed" });
-  }
-});
+// Connect to MongoDB
+connectToMongoDB(MONGODB_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
 
 // Routes
 app.use("/url", urlRoute);
@@ -55,7 +49,7 @@ app.get("/:shortID", async (req, res) => {
   }
 });
 
-// Vercel handler
-module.exports = (req, res) => {
-  app(req, res);
-};
+// Only listen in local development
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`Server Started at port ${PORT}`));
+}
