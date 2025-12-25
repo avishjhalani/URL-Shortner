@@ -18,9 +18,11 @@ module.exports = async (req, res) => {
   try {
     await ensureDB();
     
-    const shortID = req.query.shortID || req.url.split('/').pop();
+    // Extract shortID from URL path
+    // Vercel dynamic route: /api/[shortID] means shortID is in req.query
+    const shortID = req.query.shortID || req.url.replace('/api/', '').split('/')[0];
     
-    if (!shortID || shortID.length > 20) {
+    if (!shortID || shortID.length > 20 || shortID.includes('/')) {
       return res.status(400).json({ error: "Invalid short ID" });
     }
 
@@ -37,7 +39,9 @@ module.exports = async (req, res) => {
     return res.redirect(301, entry.redirectURL);
   } catch (err) {
     console.error("Redirect error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Internal server error", details: err.message });
+    }
   }
 };
 

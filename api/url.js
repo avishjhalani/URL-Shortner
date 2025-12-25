@@ -1,11 +1,5 @@
-const express = require("express");
-const urlRoute = require("../routes/url");
+const { handleGenerateNewShortURL } = require("../controllers/url");
 const { connectToMongoDB } = require("../connect");
-
-const app = express();
-
-// Middleware
-app.use(express.json({ strict: false }));
 
 let isConnected = false;
 
@@ -20,28 +14,48 @@ async function ensureDB() {
   }
 }
 
-app.use(async (req, res, next) => {
-  try {
-    await ensureDB();
-    next();
-  } catch (err) {
-    console.error("DB connection failed", err);
-    return res.status(500).json({ error: "Database connection failed" });
-  }
-});
-
-// Routes - handle both POST /api/url and POST /api/url/
-app.use("/", urlRoute);
-
-// Vercel serverless function handler
 module.exports = async (req, res) => {
-  // Ensure proper JSON responses
-  res.setHeader('Content-Type', 'application/json');
-  
-  // Handle the request with Express
-  return new Promise((resolve) => {
-    app(req, res);
-    res.on('finish', resolve);
-  });
+  try {
+    // Set CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    // Handle OPTIONS request
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
+    
+    // Only allow POST
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+    
+    // Ensure database connection
+    await ensureDB();
+    
+    // Vercel automatically parses JSON body, but ensure it exists
+    if (!req.body) {
+      return res.status(400).json({ error: 'Request body is required' });
+    }
+    
+    // Call the controller
+    await handleGenerateNewShortURL(req, res);
+    
+  } catch (err) {
+    console.error("API error:", err);
+    console.error("Error details:", {
+      message: err.message,
+      stack: err.stack,
+      name: err.name
+    });
+    
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: "Internal server error",
+        message: process.env.NODE_ENV === 'development' ? err.message : undefined
+      });
+    }
+  }
 };
 

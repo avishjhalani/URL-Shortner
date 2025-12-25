@@ -17,11 +17,21 @@ async function ensureDB() {
 module.exports = async (req, res) => {
   try {
     await ensureDB();
-    req.params = { shortID: req.query.shortID || req.url.split('/').pop() };
+    
+    // Extract shortID from Vercel dynamic route
+    const shortID = req.query.shortID || req.url.split('/').pop();
+    
+    if (!shortID || shortID.length > 20) {
+      return res.status(400).json({ error: "Invalid short ID" });
+    }
+    
+    req.params = { shortID };
     await handleGetAnalytics(req, res);
   } catch (err) {
     console.error("Analytics error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Internal server error", details: err.message });
+    }
   }
 };
 
