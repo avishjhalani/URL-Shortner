@@ -15,20 +15,30 @@ app.use(express.static("public"));
 app.use(express.json({ strict: false }));
 
 // Connect to MongoDB (will be cached in serverless)
+// Don't await - let it connect in background for faster cold starts
 connectToMongoDB(MONGODB_URI)
   .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    // Don't crash the app - connection will retry on first request
+  });
 
 app.use("/url", urlRoute);
 
 // Analytics route - must be before the catch-all route
 app.get("/analytics/:shortID", handleGetAnalytics);
 
-// Redirect route
+// Redirect route - optimized for performance
 app.get("/:shortID", async (req, res) => {
   try {
     const shortID = req.params.shortID;
 
+    // Basic validation
+    if (!shortID || shortID.length > 20) {
+      return res.status(400).json({ error: "Invalid short ID" });
+    }
+
+    // Use new: true to get updated document, and only select needed fields
     const entry = await URL.findOneAndUpdate(
       { shortID },
       {
@@ -37,6 +47,10 @@ app.get("/:shortID", async (req, res) => {
             timestamp: Date.now(),
           },
         },
+      },
+      { 
+        new: true,
+        select: 'redirectURL -_id' // Only get redirectURL, exclude _id
       }
     );
 
@@ -44,7 +58,7 @@ app.get("/:shortID", async (req, res) => {
       return res.status(404).json({ error: "Short URL not found" });
     }
 
-    return res.redirect(entry.redirectURL);
+    return res.redirect(301, entry.redirectURL); // 301 permanent redirect
   } catch (error) {
     console.error("Error redirecting:", error);
     return res.status(500).json({ error: "Internal server error" });

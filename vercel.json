@@ -9,12 +9,28 @@
   "routes": [
     {
       "src": "/public/(.*)",
-      "dest": "/public/$1"
+      "dest": "/public/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "/analytics/(.*)",
+      "dest": "index.js"
+    },
+    {
+      "src": "/url/(.*)",
+      "dest": "index.js"
     },
     {
       "src": "/(.*)",
       "dest": "index.js"
     }
-  ]
+  ],
+  "functions": {
+    "index.js": {
+      "maxDuration": 10
+    }
+  }
 }
 
