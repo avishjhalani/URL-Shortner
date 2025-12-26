@@ -19,10 +19,19 @@ module.exports = async (req, res) => {
     await ensureDB();
     
     // Extract shortID from URL path
-    // Vercel dynamic route: /api/[shortID] means shortID is in req.query
-    const shortID = req.query.shortID || req.url.replace('/api/', '').split('/')[0];
+    // Vercel dynamic route: /api/[shortID] - shortID is available in req.query
+    // Also handle direct path access: /api/abc123 -> abc123
+    let shortID = req.query.shortID;
     
-    if (!shortID || shortID.length > 20 || shortID.includes('/')) {
+    // If not in query, extract from URL path
+    if (!shortID) {
+      const urlPath = req.url.split('?')[0]; // Remove query string
+      const pathParts = urlPath.split('/').filter(p => p); // Split and remove empty
+      shortID = pathParts[pathParts.length - 1]; // Get last part (the shortID)
+    }
+    
+    // Validate shortID
+    if (!shortID || shortID.length > 20 || shortID.includes('/') || shortID === 'api') {
       return res.status(400).json({ error: "Invalid short ID" });
     }
 
