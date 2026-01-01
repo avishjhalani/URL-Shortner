@@ -1,4 +1,12 @@
-const { nanoid } = require('nanoid');
+let nanoid;
+
+async function getNanoId() {
+  if (!nanoid) {
+    ({ nanoid } = await import('nanoid'));
+  }
+  return nanoid;
+}
+
 const UrlModel = require('../models/url'); // ✅ renamed
 
 async function handleGenerateNewShortURL(req, res) {
