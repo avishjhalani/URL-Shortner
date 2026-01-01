@@ -14,7 +14,7 @@ app.use(express.static("public"));
 // Middleware
 app.use(express.json({ strict: false }));
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/URLSHORT";
+const MONGODB_URI = process.env.MONGODB_URI;
 
 // Connect to MongoDB
 connectToMongoDB(MONGODB_URI)
