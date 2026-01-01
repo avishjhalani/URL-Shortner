@@ -1,16 +1,23 @@
-let nanoid;
+// Dynamic ESM-safe nanoid loader (works on Vercel / Node 18)
+let nanoidFn;
 
 async function getNanoId() {
-  if (!nanoid) {
-    ({ nanoid } = await import('nanoid'));
+  if (!nanoidFn) {
+    const mod = await import('nanoid');
+    nanoidFn = mod.nanoid;
   }
-  return nanoid;
+  return nanoidFn;
 }
 
-const UrlModel = require('../models/url'); // ✅ renamed
+const UrlModel = require('../models/url');
 
+// ----------------------------
+// CREATE SHORT URL
+// ----------------------------
 async function handleGenerateNewShortURL(req, res) {
   try {
+    const nanoid = await getNanoId();
+
     const body = req.body;
 
     if (!body || !body.url) {
@@ -19,9 +26,12 @@ async function handleGenerateNewShortURL(req, res) {
 
     let urlToShorten = body.url.trim();
 
-    // ✅ Use global URL constructor safely
+    // Validate & normalize URL
     try {
-      if (!urlToShorten.startsWith('http://') && !urlToShorten.startsWith('https://')) {
+      if (
+        !urlToShorten.startsWith('http://') &&
+        !urlToShorten.startsWith('https://')
+      ) {
         urlToShorten = 'https://' + urlToShorten;
       }
       new global.URL(urlToShorten);
@@ -32,6 +42,7 @@ async function handleGenerateNewShortURL(req, res) {
     let shortID;
     let attempts = 0;
 
+    // Collision-safe ID generation
     do {
       shortID = nanoid(8);
       const exists = await UrlModel.findOne({ shortID });
@@ -40,7 +51,9 @@ async function handleGenerateNewShortURL(req, res) {
     } while (attempts < 5);
 
     if (attempts >= 5) {
-      return res.status(500).json({ error: 'Failed to generate unique short URL' });
+      return res.status(500).json({
+        error: 'Failed to generate unique short URL',
+      });
     }
 
     await UrlModel.create({
@@ -49,13 +62,16 @@ async function handleGenerateNewShortURL(req, res) {
       visitHistory: [],
     });
 
-    return res.json({ id: shortID });
+    return res.status(201).json({ id: shortID });
   } catch (err) {
     console.error('Error generating short URL:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
 
+// ----------------------------
+// GET ANALYTICS
+// ----------------------------
 async function handleGetAnalytics(req, res) {
   try {
     const { shortID } = req.params;
